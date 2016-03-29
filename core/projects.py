@@ -44,11 +44,42 @@ class Projects():
             content = yaml.load(conf_file)
             self._content = content if content else []
 
-    def add_project(self, name):
-        if any(x.name == name for x in self._content):
+    def add_project(self, project_name):
+        if any(x.name == project_name for x in self._content):
             return
 
-        self._content.append(Project(name, []))
+        self._content.append(Project(project_name, []))
+
+        prefix = '{0}.yml_'.format(PROJECTS_FILE)
+        f = tempfile.NamedTemporaryFile(prefix=prefix, delete=False)
+        tmp_fname = f.name
+        f.close()
+
+        with open(tmp_fname, 'w') as tmp_file:
+            yaml.dump(self._content, tmp_file)
+
+        try:
+            shutil.move(tmp_fname, self._conf_file)
+        except:
+            raise OSError('Error: Cannot move "{0}" file.'.format(tmp_fname))
+
+    def add_template_into_project(self, project_name, template_file):
+        if not any(x.name == project_name for x in self._content):
+            err_msg = 'Error: Project "{0}" doesn\'t exist.'.format(
+                project_name)
+            raise IOError(err_msg)
+
+        if not os.path.exists(template_file):
+            err_msg = 'Error: File "{0}" doesn\'t exist.'.format(template_file)
+            raise IOError(err_msg)
+
+        projects = [x for x in self._content if x.name == project_name]
+        if len(projects) != 1:
+            raise ValueError
+        project = projects[0]
+
+        print(project)
+        project.templates.append(template_file)
 
         prefix = '{0}.yml_'.format(PROJECTS_FILE)
         f = tempfile.NamedTemporaryFile(prefix=prefix, delete=False)

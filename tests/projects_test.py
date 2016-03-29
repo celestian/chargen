@@ -97,3 +97,49 @@ def test_init_same_project(tmpdir):
 
     assert len(content) == 1
     assert test_project_A in content
+
+
+def test_add_template_into_no_existing_project(tmpdir):
+    core.projects.DATA_DIRECTORY = str(tmpdir.realpath())
+    recent_projects = core.projects.Projects()
+
+    with pytest.raises(IOError):
+        recent_projects.add_template_into_project(
+            'test_project_A', 'template.md')
+
+
+def test_add_template_into_project_no_existing_template(tmpdir):
+    core.projects.DATA_DIRECTORY = str(tmpdir.realpath())
+    recent_projects = core.projects.Projects()
+    recent_projects.add_project('test_project_A')
+
+    with pytest.raises(IOError):
+        recent_projects.add_template_into_project(
+            'test_project_A', 'template.md')
+
+
+def test_add_template_into_project(tmpdir):
+    core.projects.DATA_DIRECTORY = str(tmpdir.realpath())
+
+    template_file = os.path.join(
+        core.projects.DATA_DIRECTORY,
+        'test_template.md')
+    with open(template_file, 'w'):
+        pass
+
+    recent_projects = core.projects.Projects()
+    recent_projects.add_project('test_project_A')
+    recent_projects.add_template_into_project('test_project_A', template_file)
+    del recent_projects
+
+    test_project_A = core.projects.Project(
+        name='test_project_A', templates=[template_file])
+
+    projects_file = os.path.join(
+        core.projects.DATA_DIRECTORY,
+        core.projects.PROJECTS_FILE)
+    with open(projects_file, 'r') as f:
+        content = yaml.load(f)
+
+    assert len(content) == 1
+    assert test_project_A in content
